@@ -1,5 +1,10 @@
 #include "main.h"
-
+pros::Controller master(pros::E_CONTROLLER_MASTER);
+pros::Motor lift_mtr(18);
+pros::Motor leftback_mtr(20);
+pros::Motor leftfront_mtr(17);
+pros::Motor rightfront_mtr(19);
+pros::Motor rightback_mtr(16);
 /**
  * A callback function for LLEMU's center button.
  *
@@ -73,22 +78,67 @@ void autonomous() {}
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+void printMotorData(pros::Motor motor) {
+	 pros::lcd::print(1, "Motor position %f", motor.get_position());
+	 pros::lcd::print(2, "Motor Temperature %f", motor.get_temperature());
+	 pros::lcd::print(3, "Motor Torque %f", motor.get_torque());
+	 pros::lcd::print(4, "Motor Voltage %i", motor.get_voltage());
+	 pros::lcd::print(5, "Motor is over current %i", motor.is_over_current());
+	 pros::lcd::print(5, "Motor is at position %f", motor.get_position());
+}
+
+
+
 void opcontrol() {
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
-	pros::Motor left_mtr(11);
-	pros::Motor right_mtr(12);
+
 
 	while (true) {
-		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);
 
 		int left = master.get_analog(ANALOG_LEFT_Y);
 		int right = master.get_analog(ANALOG_RIGHT_Y);
 
-		left_mtr = left;
-		right_mtr = right;
-		pros::delay(20);
+		leftfront_mtr = left;	//left joystick controls left wheels
+		leftback_mtr = left;
 
+		rightfront_mtr = -right;	//right joystick has right wheels
+		rightback_mtr = -right;
+
+		bool zero_bot =  master.get_digital(DIGITAL_X);
+		if (zero_bot){		//this zeroes the encoder when x is pressed, for driving wheel assist in lift_target function
+			lift_mtr.tare_position();		//hopefully do this whole function in auton later OR have the zero set in the initial position and change the other numbers
+		}
+
+
+		bool fold_up = master.get_digital(DIGITAL_UP);
+		bool fold_down = master.get_digital(DIGITAL_DOWN);
+
+		int lift_target = 0;
+		if (fold_down) {		//fold it down when you press down
+			lift_mtr=127;
+		} else if (fold_up) {	//fold it up when you press up and engage wheels
+			int lift_position = lift_mtr.get_position();
+			if(lift_position > -5200){ 		//CHANGE THIS ONCE MECHANICAL STOP IS FIXED -- this value is the highest it will be able to go to prevent mechanical issues, can increase (by a bit) once the mechanical issues have been figured out
+				if (lift_position < -700 && lift_position > -4000) {	//change these numbers to adjust the height the assist goes to (left is when it engages and right is when it stops, 0 is ground level and about -5000 is vertical )
+					leftfront_mtr = 127;	//wheels go in to help lift
+					leftback_mtr = -100;
+					rightfront_mtr = -127;
+					rightback_mtr = 100;
+
+					lift_mtr=-127;
+				}
+				else{
+					lift_mtr=-127;
+				}
+			}
+		} else {
+			lift_mtr = 0;
+		}
+
+
+		// pros::lcd::set_text(2, std::to_string(lift_mtr.get_position()));
+		/*if (master.get_digital(DIGITAL_R1)) {
+		}*/
+		printMotorData(lift_mtr);
+		pros::delay(20);
 	}
 }
