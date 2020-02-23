@@ -1,6 +1,7 @@
 #include "main.h"
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::Motor lift_mtr(18);
+pros::Motor lift_mtr_0(18, pros::E_MOTOR_GEARSET_36);
+pros::Motor lift_mtr_1(15, pros::E_MOTOR_GEARSET_36);
 pros::Motor leftback_mtr(20);
 pros::Motor leftfront_mtr(17);
 pros::Motor rightfront_mtr(19);
@@ -105,7 +106,8 @@ void opcontrol() {
 
 		bool zero_bot =  master.get_digital(DIGITAL_X);
 		if (zero_bot){		//this zeroes the encoder when x is pressed, for driving wheel assist in lift_target function
-			lift_mtr.tare_position();		//hopefully do this whole function in auton later OR have the zero set in the initial position and change the other numbers
+			lift_mtr_0.tare_position();		//hopefully do this whole function in auton later OR have the zero set in the initial position and change the other numbers
+			lift_mtr_1.tare_position();
 		}
 
 
@@ -114,9 +116,15 @@ void opcontrol() {
 
 		int lift_target = 0;
 		if (fold_down) {		//fold it down when you press down
-			lift_mtr=127;
+			lift_mtr_0=127;
+			lift_mtr_1=127;
+
+			leftfront_mtr = -127;	//wheels go in to help lift
+			leftback_mtr = 100;
+			rightfront_mtr = 127;
+			rightback_mtr = -100;
 		} else if (fold_up) {	//fold it up when you press up and engage wheels
-			int lift_position = lift_mtr.get_position();
+			int lift_position = lift_mtr_0.get_position();
 			if(lift_position > -5200){ 		//CHANGE THIS ONCE MECHANICAL STOP IS FIXED -- this value is the highest it will be able to go to prevent mechanical issues, can increase (by a bit) once the mechanical issues have been figured out
 				if (lift_position < -700 && lift_position > -4000) {	//change these numbers to adjust the height the assist goes to (left is when it engages and right is when it stops, 0 is ground level and about -5000 is vertical )
 					leftfront_mtr = 127;	//wheels go in to help lift
@@ -124,21 +132,24 @@ void opcontrol() {
 					rightfront_mtr = -127;
 					rightback_mtr = 100;
 
-					lift_mtr=-127;
+					lift_mtr_0=-127;
+					lift_mtr_1=-127;
 				}
 				else{
-					lift_mtr=-127;
+					lift_mtr_0=-127;
+					lift_mtr_1=-127;
 				}
 			}
 		} else {
-			lift_mtr = 0;
+			lift_mtr_0 = 0;
+			lift_mtr_1 = 0;
 		}
 
 
 		// pros::lcd::set_text(2, std::to_string(lift_mtr.get_position()));
 		/*if (master.get_digital(DIGITAL_R1)) {
 		}*/
-		printMotorData(lift_mtr);
+		printMotorData(lift_mtr_1);
 		pros::delay(20);
 	}
 }
