@@ -126,19 +126,13 @@ void opcontrol() {
 		} else if (fold_up) {	//fold it up when you press up and engage wheels
 			int lift_position = lift_mtr_0.get_position();
 			if(lift_position > -5200){ 		//CHANGE THIS ONCE MECHANICAL STOP IS FIXED -- this value is the highest it will be able to go to prevent mechanical issues, can increase (by a bit) once the mechanical issues have been figured out
-				if (lift_position < -700 && lift_position > -4000) {	//change these numbers to adjust the height the assist goes to (left is when it engages and right is when it stops, 0 is ground level and about -5000 is vertical )
-					leftfront_mtr = 127;	//wheels go in to help lift
-					leftback_mtr = -100;
-					rightfront_mtr = -127;
-					rightback_mtr = 100;
+				leftfront_mtr = 127;	//wheels go in to help lift
+				leftback_mtr = -127;
+				rightfront_mtr = -127;
+				rightback_mtr = 127;
 
-					lift_mtr_0=-127;
-					lift_mtr_1=-127;
-				}
-				else{
-					lift_mtr_0=-127;
-					lift_mtr_1=-127;
-				}
+				lift_mtr_0=-127;
+				lift_mtr_1=-127;
 			}
 		} else {
 			lift_mtr_0 = 0;
